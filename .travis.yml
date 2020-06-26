@@ -1,0 +1,22 @@
+language: go
+go:
+  - 1.14.x
+os:
+  - linux
+
+services:
+  - docker
+
+script:
+  - docker build -t quay.io/bakito/traefik-cert-extractor:$TRAVIS_BRANCH                                                         -f build/Dockerfile .
+  - docker build -t quay.io/bakito/traefik-cert-extractor-armv7:$TRAVIS_BRANCH --build-arg ARG_GOARCH=arm --build-arg ARG_GOARM=7 -f build/Dockerfile .
+
+deploy:
+  - provider: script
+    script: build/push-to-quay.sh quay.io/bakito/traefik-cert-extractor quay.io/bakito/traefik-cert-extractor-armv7
+    on:
+      branch: "master"
+  - provider: script
+    script: build/push-to-quay.sh quay.io/bakito/traefik-cert-extractor quay.io/bakito/traefik-cert-extractor-armv7
+    on:
+      tags: true
