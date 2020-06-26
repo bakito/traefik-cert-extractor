@@ -21,6 +21,7 @@ const (
 	end = "-----END CERTIFICATE-----"
 )
 
+// WatchFileChanges watch acme file changes and update the certs
 func WatchFileChanges(log *zap.SugaredLogger, acmePath string, certsDir string) {
 
 	if err := Extract(log, acmePath, certsDir); err != nil {
@@ -64,6 +65,7 @@ func WatchFileChanges(log *zap.SugaredLogger, acmePath string, certsDir string) 
 	<-done
 }
 
+// Extract the certs from the acme file
 func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 	dat, err := ioutil.ReadFile(acmePath)
 	if err != nil {
@@ -82,43 +84,30 @@ func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 			if err != nil {
 				return err
 			}
-			if fullchain, err := writeCert(filepath.Join(dir, "fullchain.pem"), c.Certificate); err != nil {
+			var fullChain []byte
+			if fullChain, err = writeCert(filepath.Join(dir, "fullchain.pem"), c.Certificate); err != nil {
 				return err
-			} else {
-				var cert []string
-				var chain []string
-				certDone := false
+			}
 
-				for _, l := range strings.Split(string(fullchain), "\n") {
-					if strings.TrimSpace(l) != "" {
-						if !certDone {
-							cert = append(cert, l)
-							certDone = end == strings.TrimSpace(l)
-						} else {
-							chain = append(chain, l)
-						}
-					}
-				}
+			cert, chain := splitCert(fullChain)
+			err = ioutil.WriteFile(filepath.Join(dir, "cert.pem"), cert, 0644)
+			if err != nil {
+				return err
+			}
+			err = ioutil.WriteFile(filepath.Join(dir, "chain.pem"), chain, 0644)
+			if err != nil {
+				return err
+			}
 
-				err = ioutil.WriteFile(filepath.Join(dir, "cert.pem"), []byte(strings.Join(cert, "\n")), 0644)
+			info, err := info(cert)
+			if err == nil {
+				err = ioutil.WriteFile(filepath.Join(dir, "info"), []byte(info), 0644)
 				if err != nil {
 					return err
 				}
-				err = ioutil.WriteFile(filepath.Join(dir, "chain.pem"), []byte(strings.Join(chain, "\n")), 0644)
-				if err != nil {
-					return err
-				}
-
-				info, err := info([]byte(strings.Join(cert, "\n")))
-				if err == nil {
-					err = ioutil.WriteFile(filepath.Join(dir, "info"), []byte(info), 0644)
-					if err != nil {
-						return err
-					}
-				}
-				if err != nil {
-					return err
-				}
+			}
+			if err != nil {
+				return err
 			}
 			if _, err := writeCert(filepath.Join(dir, "privkey.pem"), c.Key); err != nil {
 				return err
@@ -127,6 +116,24 @@ func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 	}
 
 	return nil
+}
+
+func splitCert(fullChain []byte) ([]byte, []byte) {
+	var cert []string
+	var chain []string
+	certDone := false
+
+	for _, l := range strings.Split(string(fullChain), "\n") {
+		if strings.TrimSpace(l) != "" {
+			if !certDone {
+				cert = append(cert, l)
+				certDone = end == strings.TrimSpace(l)
+			} else {
+				chain = append(chain, l)
+			}
+		}
+	}
+	return []byte(strings.Join(cert, "\n")), []byte(strings.Join(chain, "\n"))
 }
 
 func info(cert []byte) (string, error) {
