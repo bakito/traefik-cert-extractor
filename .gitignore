@@ -14,3 +14,4 @@
 .idea
 
 testdata/certs
+traefik-cert-extractor*

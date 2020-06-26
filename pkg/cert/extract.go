@@ -1,8 +1,10 @@
 package cert
 
 import (
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,6 +12,8 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/grantae/certinfo"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -104,6 +108,17 @@ func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 				if err != nil {
 					return err
 				}
+
+				info, err := info([]byte(strings.Join(cert, "\n")))
+				if err == nil {
+					err = ioutil.WriteFile(filepath.Join(dir, "info"), []byte(info), 0644)
+					if err != nil {
+						return err
+					}
+				}
+				if err != nil {
+					return err
+				}
 			}
 			if _, err := writeCert(filepath.Join(dir, "privkey.pem"), c.Key); err != nil {
 				return err
@@ -112,6 +127,19 @@ func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 	}
 
 	return nil
+}
+
+func info(cert []byte) (string, error) {
+	block, _ := pem.Decode(cert)
+	if block == nil {
+		return "", errors.New("error decoding cert")
+	}
+	c, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", err
+	}
+
+	return certinfo.CertificateText(c)
 }
 
 func writeCert(path string, data string) ([]byte, error) {

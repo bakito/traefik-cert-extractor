@@ -11,21 +11,38 @@ import (
 )
 
 const (
-	envCertsDir     = "CERTS_DIR"
 	envAcmeFilePath = "ACME_FILE_PATH"
+	envCertsDir     = "CERTS_DIR"
+)
+
+var (
+	acmePath string
+	certsDir string
 )
 
 func main() {
 	log := initLogger()
 	defer log.Sync()
 
-	go cert.WatchFileChanges(log, os.Getenv(envAcmeFilePath), os.Getenv(envCertsDir))
+	if e, ok := os.LookupEnv(envAcmeFilePath); !ok {
+		log.Fatalw("Missing environment variable", "name", envAcmeFilePath)
+	} else {
+		acmePath = e
+	}
+
+	if e, ok := os.LookupEnv(envCertsDir); !ok {
+		log.Fatalw("Missing environment variable", "name", envCertsDir)
+	} else {
+		certsDir = e
+	}
+
+	go cert.WatchFileChanges(log, acmePath, certsDir)
 
 	// create file server handler
-	fs := http.FileServer(http.Dir(os.Getenv(envCertsDir)))
+	fs := http.FileServer(http.Dir(certsDir))
 
 	// start HTTP server with `fs` as the default handler
-	log.Fatal(http.ListenAndServe(":9000", fs))
+	log.Fatal(http.ListenAndServe(":8080", fs))
 }
 
 func initLogger() *zap.SugaredLogger {
