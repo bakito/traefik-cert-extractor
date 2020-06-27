@@ -3,20 +3,24 @@ go:
   - 1.14.x
 os:
   - linux
-
 services:
   - docker
-
 script:
-  - docker build -t quay.io/bakito/traefik-cert-extractor:$TRAVIS_BRANCH                                                         -f build/Dockerfile .
-  - docker build -t quay.io/bakito/traefik-cert-extractor-armv7:$TRAVIS_BRANCH --build-arg ARG_GOARCH=arm --build-arg ARG_GOARM=7 -f build/Dockerfile .
-
-#deploy:
-#  - provider: script
-#    script: build/push-to-quay.sh quay.io/bakito/traefik-cert-extractor quay.io/bakito/traefik-cert-extractor-armv7
-#    on:
-#      branch: "master"
-#  - provider: script
-#    script: build/push-to-quay.sh quay.io/bakito/traefik-cert-extractor quay.io/bakito/traefik-cert-extractor-armv7
-#    on:
-#      tags: true
+  - go build ./...
+before_deploy:
+  - curl -sfL https://raw.githubusercontent.com/ldez/seihon/master/godownloader.sh |
+    bash -s -- -b "${GOPATH}/bin" ${SEIHON_VERSION}
+  - seihon --version
+  - |
+    if ! [ "$BEFORE_DEPLOY_RUN" ]; then
+      export BEFORE_DEPLOY_RUN=1;
+      echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+    fi
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script:
+      seihon publish --template ./build/tmpl.Dockerfile -v "${TRAVIS_TAG}" -v "latest"
+      --image-name bakito/traefik-cert-extractor --dry-run=false
+    on:
+      tags: true

@@ -4,14 +4,12 @@ WORKDIR /build
 
 RUN apt-get update && apt-get install -y upx
 
-ARG ARG_GOARCH=amd64
-ARG ARG_GOARM
 ENV GOPROXY=https://goproxy.io \
   GO111MODULE=on \
   CGO_ENABLED=0 \
   GOOS=linux \
-  GOARCH=${ARG_GOARCH}\
-  GOARM=${ARG_GOARM}
+  GOARCH={{ .GoARCH }}\
+  GOARM={{ .GoARM }}
 COPY . .
 
 RUN go build -a -installsuffix cgo -o traefik-cert-extractor . && \
