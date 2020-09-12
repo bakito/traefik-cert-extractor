@@ -14,8 +14,9 @@ ENV GOPROXY=https://goproxy.io \
   GOARM=${ARG_GOARM}
 COPY . .
 
-RUN go build -a -installsuffix cgo -o traefik-cert-extractor . && \
-  upx -q traefik-cert-extractor
+RUN make generate \
+  && go build -a -installsuffix cgo -o traefik-cert-extractor . \
+  && upx -q traefik-cert-extractor
 
 # application image
 FROM scratch

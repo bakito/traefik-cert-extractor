@@ -1,0 +1,47 @@
+<html>
+<head>
+    <title>traefik-cert-extractor</title>
+    <link rel="icon" type="image/png" href="/favicon.ico"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+<div class="container">
+    <h1>{{.PageTitle}}</h1>
+    <div class="row">
+        <div class="col">Name</div>
+        <div class="col-md">Valid from</div>
+        <div class="col-md">Valid until</div>
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col"></div>
+        <div class="col"></div>
+    </div>
+    {{range .Certs}}
+        <div class="row">
+            <div class="col">{{ .Name }}</div>
+            <div class="col">{{ .NotBeforeString }}</div>
+            <div class="col">{{ .NotAfterString }}</div>
+            <div class="col"><a href="/{{ .Name }}/info">info</a></div>
+            <div class="col"><a href="/{{ .Name }}/cert.pem">cert.pem</a></div>
+            <div class="col"><a href="/{{ .Name }}/chain.pem">chain.pem</a></div>
+            <div class="col"><a href="/{{ .Name }}/fullchain.pem">fullchain.pem</a></div>
+            <div class="col"><a href="/{{ .Name }}/privkey.pem">privkey.pem</a></div>
+        </div>
+    {{end}}
+</div>
+<footer class="footer">
+    <div class="container">
+        <span class="text-muted">traefik-cert-extractor</span>
+    </div>
+</footer>
+<script
+        defer
+        src="https://use.fontawesome.com/releases/v5.7.2/js/all.js"
+        integrity="sha384-0pzryjIRos8mFBWMzSSZApWtPl/5++eIfzYmTgBBmXYdhvxPc+XcFEk+zJwDgWbP"
+        crossorigin="anonymous"
+></script>
+</body>
+</html>

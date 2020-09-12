@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -21,10 +22,47 @@ const (
 	end = "-----END CERTIFICATE-----"
 )
 
-// WatchFileChanges watch acme file changes and update the certs
-func WatchFileChanges(log *zap.SugaredLogger, acmePath string, certsDir string) {
+// Certs all certificates
+type Certs struct {
+	certs map[string]Cert
+}
 
-	if err := Extract(log, acmePath, certsDir); err != nil {
+// Cert a certificate
+type Cert struct {
+	Name      string
+	NotBefore time.Time
+	NotAfter  time.Time
+}
+
+// NotBeforeString NotBefore as string
+func (c *Cert) NotBeforeString() string {
+	return c.NotBefore.Format("02.01.2006")
+}
+
+// NotAfterString NotAfter as string
+func (c *Cert) NotAfterString() string {
+	return c.NotAfter.Format("02.01.2006")
+}
+
+// Certs get the current certs
+func (c *Certs) Certs() []Cert {
+	var certs []Cert
+
+	for _, value := range c.certs {
+		certs = append(certs, value)
+	}
+	sort.Slice(certs, func(i, j int) bool {
+		return certs[i].Name > certs[j].Name
+	})
+
+	return certs
+}
+
+// WatchFileChanges watch acme file changes and update the certs
+func (c *Certs) WatchFileChanges(log *zap.SugaredLogger, acmePath string, certsDir string) {
+	c.certs = make(map[string]Cert)
+
+	if err := c.extract(log, acmePath, certsDir); err != nil {
 		log.Fatal(err)
 	}
 
@@ -45,7 +83,7 @@ func WatchFileChanges(log *zap.SugaredLogger, acmePath string, certsDir string) 
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					log.Infow("modified file", "name", event.Name)
 					time.Sleep(time.Second)
-					if err := Extract(log, event.Name, certsDir); err != nil {
+					if err := c.extract(log, event.Name, certsDir); err != nil {
 						log.Error(err)
 					}
 				}
@@ -65,8 +103,7 @@ func WatchFileChanges(log *zap.SugaredLogger, acmePath string, certsDir string) 
 	<-done
 }
 
-// Extract the certs from the acme file
-func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
+func (c *Certs) extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 	dat, err := ioutil.ReadFile(acmePath)
 	if err != nil {
 		return err
@@ -77,19 +114,19 @@ func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 	}
 
 	for _, r := range *acme {
-		for _, c := range r.Certificates {
-			log.Infow("extracting certs", "domain", c.Domain.Main)
-			dir := filepath.Join(certsDir, c.Domain.Main)
+		for _, crt := range r.Certificates {
+			log.Infow("extracting certs", "domain", crt.Domain.Main)
+			dir := filepath.Join(certsDir, crt.Domain.Main)
 			err = os.MkdirAll(dir, os.ModePerm)
 			if err != nil {
 				return err
 			}
 			var fullChain []byte
-			if fullChain, err = writeCert(filepath.Join(dir, "fullchain.pem"), c.Certificate); err != nil {
+			if fullChain, err = c.writeCert(filepath.Join(dir, "fullchain.pem"), crt.Certificate); err != nil {
 				return err
 			}
 
-			cert, chain := splitCert(fullChain)
+			cert, chain := c.splitCert(fullChain)
 			err = ioutil.WriteFile(filepath.Join(dir, "cert.pem"), cert, 0644)
 			if err != nil {
 				return err
@@ -99,7 +136,7 @@ func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 				return err
 			}
 
-			info, err := info(cert)
+			info, infoCrt, err := c.info(cert)
 			if err == nil {
 				err = ioutil.WriteFile(filepath.Join(dir, "info"), []byte(info), 0644)
 				if err != nil {
@@ -109,8 +146,13 @@ func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 			if err != nil {
 				return err
 			}
-			if _, err := writeCert(filepath.Join(dir, "privkey.pem"), c.Key); err != nil {
+			if _, err := c.writeCert(filepath.Join(dir, "privkey.pem"), crt.Key); err != nil {
 				return err
+			}
+			c.certs[crt.Domain.Main] = Cert{
+				Name:      crt.Domain.Main,
+				NotBefore: infoCrt.NotBefore,
+				NotAfter:  infoCrt.NotAfter,
 			}
 		}
 	}
@@ -118,7 +160,7 @@ func Extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
 	return nil
 }
 
-func splitCert(fullChain []byte) ([]byte, []byte) {
+func (c *Certs) splitCert(fullChain []byte) ([]byte, []byte) {
 	var cert []string
 	var chain []string
 	certDone := false
@@ -136,20 +178,21 @@ func splitCert(fullChain []byte) ([]byte, []byte) {
 	return []byte(strings.Join(cert, "\n")), []byte(strings.Join(chain, "\n"))
 }
 
-func info(cert []byte) (string, error) {
+func (c *Certs) info(cert []byte) (string, *x509.Certificate, error) {
 	block, _ := pem.Decode(cert)
 	if block == nil {
-		return "", errors.New("error decoding cert")
+		return "", nil, errors.New("error decoding cert")
 	}
-	c, err := x509.ParseCertificate(block.Bytes)
+	crt, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return certinfo.CertificateText(c)
+	info, err := certinfo.CertificateText(crt)
+	return info, crt, err
 }
 
-func writeCert(path string, data string) ([]byte, error) {
+func (c *Certs) writeCert(path string, data string) ([]byte, error) {
 	cert, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return nil, err

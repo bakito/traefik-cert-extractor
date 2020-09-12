@@ -12,7 +12,7 @@ tidy:
 	go mod tidy
 
 # Run tests
-test: tidy fmt vet
+test: generate tidy fmt vet
 	go test ./...  -coverprofile=coverage.out
 	go tool cover -func=coverage.out
 
@@ -38,6 +38,9 @@ licenses: go-licenses
 	go-licenses csv "github.com/bakito/traefik-cert-extractor/cmd/generic"  2>/dev/null | sort > ./dependency-licenses.csv
 
 tools: goveralls goreleaser go-licenses
+
+generate:
+	go generate ./...
 
 goveralls:
 ifeq (, $(shell which goveralls))

@@ -2,14 +2,15 @@ package main
 
 import (
 	"crypto/tls"
+	"github.com/bakito/traefik-cert-extractor/pkg/box"
+	"github.com/bakito/traefik-cert-extractor/pkg/cert"
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"go.uber.org/zap/zapcore"
-
-	"github.com/bakito/traefik-cert-extractor/pkg/cert"
-	"go.uber.org/zap"
 )
 
 const (
@@ -44,10 +45,26 @@ func main() {
 		ownAddress = e
 	}
 
-	go cert.WatchFileChanges(log, acmePath, certsDir)
+	certs := cert.Certs{}
 
-	// create file server handler
-	fs := http.FileServer(http.Dir(certsDir))
+	go certs.WatchFileChanges(log, acmePath, certsDir)
+
+	r := mux.NewRouter()
+
+	r.PathPrefix("/{category}/").Handler(http.FileServer(http.Dir(certsDir)))
+
+	tmpl := template.Must(template.New("layout.html").Parse(string(box.Get("/index.html"))))
+
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		data := PageData{
+			PageTitle: "Known Certificates",
+			Certs:     certs.Certs(),
+		}
+		tmpl.Execute(w, data)
+	})
+	fromBox(r, "/gopher.png")
+	fromBox(r, "/favicon.ico")
+	fromBox(r, "/style.css")
 
 	certsDir := "/ssl"
 	if d, ok := os.LookupEnv("CERTS_DIR"); ok {
@@ -66,7 +83,7 @@ func main() {
 		// create a custom server with `TLSConfig`
 		s := &http.Server{
 			Addr:    addr,
-			Handler: fs,
+			Handler: r,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{cert},
 			},
@@ -74,8 +91,13 @@ func main() {
 		log.Fatal(s.ListenAndServeTLS("", ""))
 	} else {
 		// start HTTP server with `fs` as the default handler
-		log.Fatal(http.ListenAndServe(addr, fs))
+		log.Fatal(http.ListenAndServe(addr, r))
 	}
+}
+
+type PageData struct {
+	PageTitle string
+	Certs     []cert.Cert
 }
 
 func initLogger() *zap.SugaredLogger {
@@ -89,4 +111,10 @@ func initLogger() *zap.SugaredLogger {
 	}.Build()
 
 	return logger.Sugar()
+}
+
+func fromBox(r *mux.Router, file string) {
+	r.HandleFunc(file, func(w http.ResponseWriter, r *http.Request) {
+		w.Write(box.Get(file))
+	})
 }
