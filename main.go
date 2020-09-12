@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/tls"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"go.uber.org/zap/zapcore"
 
@@ -13,11 +15,13 @@ import (
 const (
 	envAcmeFilePath = "ACME_FILE_PATH"
 	envCertsDir     = "CERTS_DIR"
+	envOwnAddress   = "OWN_ADDRESS"
 )
 
 var (
-	acmePath string
-	certsDir string
+	acmePath   string
+	certsDir   string
+	ownAddress string
 )
 
 func main() {
@@ -36,13 +40,42 @@ func main() {
 		certsDir = e
 	}
 
+	if e, ok := os.LookupEnv(envOwnAddress); ok {
+		ownAddress = e
+	}
+
 	go cert.WatchFileChanges(log, acmePath, certsDir)
 
 	// create file server handler
 	fs := http.FileServer(http.Dir(certsDir))
 
-	// start HTTP server with `fs` as the default handler
-	log.Fatal(http.ListenAndServe(":8080", fs))
+	certsDir := "/ssl"
+	if d, ok := os.LookupEnv("CERTS_DIR"); ok {
+		certsDir = d
+	}
+
+	addr := ":8080"
+
+	if ownAddress != "" {
+		// generate a `Certificate` struct
+		cert, err := tls.LoadX509KeyPair(filepath.Join(certsDir, ownAddress, "fullchain.pem"), filepath.Join(certsDir, ownAddress, "privkey.pem"))
+		if err != nil {
+			log.Fatalw("Error resolving certs", "ownAddress", ownAddress, "certsDir", certsDir)
+		}
+
+		// create a custom server with `TLSConfig`
+		s := &http.Server{
+			Addr:    addr,
+			Handler: fs,
+			TLSConfig: &tls.Config{
+				Certificates: []tls.Certificate{cert},
+			},
+		}
+		log.Fatal(s.ListenAndServeTLS("", ""))
+	} else {
+		// start HTTP server with `fs` as the default handler
+		log.Fatal(http.ListenAndServe(addr, fs))
+	}
 }
 
 func initLogger() *zap.SugaredLogger {
