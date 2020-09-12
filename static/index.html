@@ -10,9 +10,9 @@
 <div class="container">
     <h1>{{.PageTitle}}</h1>
     <div class="row">
-        <div class="col">Name</div>
-        <div class="col-md">Valid from</div>
-        <div class="col-md">Valid until</div>
+        <div class="col-3">Name</div>
+        <div class="col">Valid from</div>
+        <div class="col">Valid until</div>
         <div class="col"></div>
         <div class="col"></div>
         <div class="col"></div>
@@ -21,7 +21,7 @@
     </div>
     {{range .Certs}}
         <div class="row">
-            <div class="col">{{ .Name }}</div>
+            <div class="col-3">{{ .Name }}</div>
             <div class="col">{{ .NotBeforeString }}</div>
             <div class="col">{{ .NotAfterString }}</div>
             <div class="col"><a href="/{{ .Name }}/info">info</a></div>
