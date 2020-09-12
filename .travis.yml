@@ -6,6 +6,7 @@ os:
 services:
   - docker
 script:
+  - make test
   - go build ./...
 before_deploy:
   - curl -sfL https://raw.githubusercontent.com/ldez/seihon/master/godownloader.sh |

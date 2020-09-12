@@ -1,0 +1,22 @@
+before:
+  hooks:
+    - make licenses
+builds:
+  - skip: true
+    main: ./cmd/generic/main.go
+    ldflags:
+      - -s -w -X github.com/bakito/traefik-cert-extractor/version.Version={{.Version}}
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+release:
+  extra_files:
+    - glob: ./dependency-licenses.csv
+    - glob: ./traefik-cert-extractor-*.tgz
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
