@@ -2,4 +2,4 @@
 
 # traefik-cert-extractor
 
-Extract and serve aecme certificates from traefik.
+Extract and serve acme certificates from traefik.
