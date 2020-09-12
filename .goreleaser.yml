@@ -1,6 +1,3 @@
-before:
-  hooks:
-    - make licenses
 builds:
   - skip: true
     main: ./cmd/generic/main.go
@@ -11,8 +8,6 @@ checksum:
 snapshot:
   name_template: "{{ .Tag }}-next"
 release:
-  extra_files:
-    - glob: ./dependency-licenses.csv
 changelog:
   sort: asc
   filters:

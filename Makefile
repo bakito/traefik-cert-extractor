@@ -34,9 +34,6 @@ release: goreleaser
 test-release: goreleaser
 	goreleaser --skip-publish --snapshot --rm-dist
 
-licenses: go-licenses
-	go-licenses csv "github.com/bakito/traefik-cert-extractor/cmd/generic"  2>/dev/null | sort > ./dependency-licenses.csv
-
 tools: goveralls goreleaser go-licenses
 
 
@@ -52,10 +49,6 @@ generate:
 goveralls:
 ifeq (, $(shell which goveralls))
  $(shell go get github.com/mattn/goveralls)
-endif
-go-licenses:
-ifeq (, $(shell which go-licenses))
- $(shell go get github.com/google/go-licenses)
 endif
 goreleaser:
 ifeq (, $(shell which goreleaser))
