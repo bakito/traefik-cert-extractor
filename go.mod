@@ -1,6 +1,6 @@
 module github.com/bakito/traefik-cert-extractor
 
-go 1.14
+go 1.15
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9
