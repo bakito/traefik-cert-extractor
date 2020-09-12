@@ -13,7 +13,6 @@ snapshot:
 release:
   extra_files:
     - glob: ./dependency-licenses.csv
-    - glob: ./traefik-cert-extractor-*.tgz
 changelog:
   sort: asc
   filters:

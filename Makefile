@@ -39,6 +39,13 @@ licenses: go-licenses
 
 tools: goveralls goreleaser go-licenses
 
+
+release: goreleaser
+	goreleaser --rm-dist
+
+test-release: goreleaser
+	goreleaser --skip-publish --snapshot --rm-dist
+
 generate:
 	go generate ./...
 
