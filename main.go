@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"github.com/bakito/traefik-cert-extractor/pkg/box"
 	"github.com/bakito/traefik-cert-extractor/pkg/cert"
+	"github.com/bakito/traefik-cert-extractor/version"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -17,6 +18,7 @@ const (
 	envAcmeFilePath = "ACME_FILE_PATH"
 	envCertsDir     = "CERTS_DIR"
 	envOwnAddress   = "OWN_ADDRESS"
+	addr            = ":8080"
 )
 
 var (
@@ -59,6 +61,7 @@ func main() {
 		data := PageData{
 			PageTitle: "Known Certificates",
 			Certs:     certs.Certs(),
+			Version:   version.Version,
 		}
 		tmpl.Execute(w, data)
 	})
@@ -71,7 +74,7 @@ func main() {
 		certsDir = d
 	}
 
-	addr := ":8080"
+	log.Infow("Starting traefik-cert-extractor", "port", addr[1:], "version", version.Version)
 
 	if ownAddress != "" {
 		// generate a `Certificate` struct
@@ -98,6 +101,7 @@ func main() {
 type PageData struct {
 	PageTitle string
 	Certs     []cert.Cert
+	Version   string
 }
 
 func initLogger() *zap.SugaredLogger {

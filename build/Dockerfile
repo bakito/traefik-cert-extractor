@@ -14,8 +14,10 @@ ENV GOPROXY=https://goproxy.io \
   GOARM=${ARG_GOARM}
 COPY . .
 
-RUN make generate \
-  && go build -a -installsuffix cgo -o traefik-cert-extractor . \
+RUN if GIT_TAG=$(git describe --tags --abbrev=0 --exact-match 2>/dev/null); then VERSION=${GIT_TAG}; else VERSION=$(git rev-parse --short HEAD); fi \
+  &&  echo Building version ${VERSION} && \
+  && make generate \
+  && go build -a -installsuffix cgo -ldflags="-w -s -X github.com/bakito/traefik-cert-extractor/version.Version=${VERSION}" -o traefik-cert-extractor . \
   && upx -q traefik-cert-extractor
 
 # application image
