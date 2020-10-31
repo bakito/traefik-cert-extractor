@@ -98,6 +98,7 @@ func main() {
 	}
 }
 
+// PageData page rendering data
 type PageData struct {
 	PageTitle string
 	Certs     []cert.Cert
