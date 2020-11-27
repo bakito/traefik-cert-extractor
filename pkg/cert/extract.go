@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/grantae/certinfo"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
