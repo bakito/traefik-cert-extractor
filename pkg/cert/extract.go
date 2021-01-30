@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	end = "-----END CERTIFICATE-----"
+	endCertificate = "-----END CERTIFICATE-----"
+	timeFormat     = "02.01.2006"
 )
 
 // Certs all certificates
@@ -36,12 +37,12 @@ type Cert struct {
 
 // NotBeforeString NotBefore as string
 func (c *Cert) NotBeforeString() string {
-	return c.NotBefore.Format("02.01.2006")
+	return c.NotBefore.Format(timeFormat)
 }
 
 // NotAfterString NotAfter as string
 func (c *Cert) NotAfterString() string {
-	return c.NotAfter.Format("02.01.2006")
+	return c.NotAfter.Format(timeFormat)
 }
 
 // Certs get the current certs
@@ -169,7 +170,7 @@ func (c *Certs) splitCert(fullChain []byte) ([]byte, []byte) {
 		if strings.TrimSpace(l) != "" {
 			if !certDone {
 				cert = append(cert, l)
-				certDone = end == strings.TrimSpace(l)
+				certDone = endCertificate == strings.TrimSpace(l)
 			} else {
 				chain = append(chain, l)
 			}

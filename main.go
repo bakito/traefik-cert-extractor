@@ -2,16 +2,17 @@ package main
 
 import (
 	"crypto/tls"
+	"html/template"
+	"net/http"
+	"os"
+	"path/filepath"
+
 	"github.com/bakito/traefik-cert-extractor/pkg/box"
 	"github.com/bakito/traefik-cert-extractor/pkg/cert"
 	"github.com/bakito/traefik-cert-extractor/version"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"html/template"
-	"net/http"
-	"os"
-	"path/filepath"
 )
 
 const (
@@ -29,7 +30,7 @@ var (
 
 func main() {
 	log := initLogger()
-	defer log.Sync()
+	defer func() { _ = log.Sync() }()
 
 	if e, ok := os.LookupEnv(envAcmeFilePath); !ok {
 		log.Fatalw("Missing environment variable", "name", envAcmeFilePath)
@@ -63,7 +64,7 @@ func main() {
 			Certs:     certs.Certs(),
 			Version:   version.Version,
 		}
-		tmpl.Execute(w, data)
+		_ = tmpl.Execute(w, data)
 	})
 	fromBox(r, "/gopher.png")
 	fromBox(r, "/favicon.ico")
@@ -78,7 +79,7 @@ func main() {
 
 	if ownAddress != "" {
 		// generate a `Certificate` struct
-		cert, err := tls.LoadX509KeyPair(filepath.Join(certsDir, ownAddress, "fullchain.pem"), filepath.Join(certsDir, ownAddress, "privkey.pem"))
+		crt, err := tls.LoadX509KeyPair(filepath.Join(certsDir, ownAddress, "fullchain.pem"), filepath.Join(certsDir, ownAddress, "privkey.pem"))
 		if err != nil {
 			log.Fatalw("Error resolving certs", "ownAddress", ownAddress, "certsDir", certsDir)
 		}
@@ -88,7 +89,7 @@ func main() {
 			Addr:    addr,
 			Handler: r,
 			TLSConfig: &tls.Config{
-				Certificates: []tls.Certificate{cert},
+				Certificates: []tls.Certificate{crt},
 			},
 		}
 		log.Fatal(s.ListenAndServeTLS("", ""))
@@ -120,6 +121,6 @@ func initLogger() *zap.SugaredLogger {
 
 func fromBox(r *mux.Router, file string) {
 	r.HandleFunc(file, func(w http.ResponseWriter, r *http.Request) {
-		w.Write(box.Get(file))
+		_, _ = w.Write(box.Get(file))
 	})
 }

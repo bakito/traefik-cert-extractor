@@ -7,18 +7,18 @@ fmt:
 vet:
 	go vet ./...
 
+# Run golangci-lint
+lint: golangci-lint
+	golangci-lint run
+
 # Run go mod tidy
 tidy:
 	go mod tidy
 
 # Run tests
-test: generate tidy fmt vet
+test: generate tidy fmt vet lint
 	go test ./...  -coverprofile=coverage.out
 	go tool cover -func=coverage.out
-
-# Run ci tests
-test-ci: test
-	goveralls -service=travis-ci -v -coverprofile=coverage.out
 
 # Build docker image
 build-docker:
@@ -34,27 +34,16 @@ release: goreleaser
 test-release: goreleaser
 	goreleaser --skip-publish --snapshot --rm-dist
 
-tools: goveralls goreleaser go-licenses
-
-
-release: goreleaser
-	goreleaser --rm-dist
-
-test-release: goreleaser
-	goreleaser --skip-publish --snapshot --rm-dist
+tools: golangci-lint goreleaser
 
 generate:
 	go generate ./...
 
-goveralls:
-ifeq (, $(shell which goveralls))
- $(shell go get github.com/mattn/goveralls)
-endif
 goreleaser:
 ifeq (, $(shell which goreleaser))
  $(shell go get github.com/goreleaser/goreleaser)
 endif
-helm:
-ifeq (, $(shell which helm))
- $(shell curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash)
+golangci-lint:
+ifeq (, $(shell which golangci-lint))
+ $(shell go get github.com/golangci/golangci-lint/cmd/golangci-lint)
 endif
