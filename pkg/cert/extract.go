@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -24,8 +25,26 @@ const (
 )
 
 // Certs all certificates
-type Certs struct {
+type Certs interface {
+	WatchFileChanges()
+	Certs() []Cert
+}
+
+func New(log *zap.SugaredLogger, acme string, certsDir string) (Certs, error) {
+	c := &certs{
+		log:  log,
+		acme: acme,
+		dir:  certsDir,
+		certs: make(map[string]Cert),
+	}
+	return c, c.extract()
+}
+
+type certs struct {
 	certs map[string]Cert
+	log   *zap.SugaredLogger
+	acme  string
+	dir   string
 }
 
 // Cert a certificate
@@ -46,7 +65,7 @@ func (c *Cert) NotAfterString() string {
 }
 
 // Certs get the current certs
-func (c *Certs) Certs() []Cert {
+func (c *certs) Certs() []Cert {
 	var certs []Cert
 
 	for _, value := range c.certs {
@@ -60,13 +79,7 @@ func (c *Certs) Certs() []Cert {
 }
 
 // WatchFileChanges watch acme file changes and update the certs
-func (c *Certs) WatchFileChanges(log *zap.SugaredLogger, acmePath string, certsDir string) {
-	c.certs = make(map[string]Cert)
-
-	if err := c.extract(log, acmePath, certsDir); err != nil {
-		log.Fatal(err)
-	}
-
+func (c *certs) WatchFileChanges() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -82,30 +95,30 @@ func (c *Certs) WatchFileChanges(log *zap.SugaredLogger, acmePath string, certsD
 					return
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Infow("modified file", "name", event.Name)
+					c.log.Infow("modified file", "name", event.Name)
 					time.Sleep(time.Second)
-					if err := c.extract(log, event.Name, certsDir); err != nil {
-						log.Error(err)
+					if err := c.extract(); err != nil {
+						c.log.Error(err)
 					}
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
 				}
-				log.Error(err)
+				c.log.Error(err)
 			}
 		}
 	}()
 
-	err = watcher.Add(acmePath)
+	err = watcher.Add(c.acme)
 	if err != nil {
 		log.Fatal(err)
 	}
 	<-done
 }
 
-func (c *Certs) extract(log *zap.SugaredLogger, acmePath string, certsDir string) error {
-	dat, err := ioutil.ReadFile(acmePath)
+func (c *certs) extract() error {
+	dat, err := ioutil.ReadFile(c.acme)
 	if err != nil {
 		return err
 	}
@@ -116,8 +129,8 @@ func (c *Certs) extract(log *zap.SugaredLogger, acmePath string, certsDir string
 
 	for _, r := range *acme {
 		for _, crt := range r.Certificates {
-			log.Infow("extracting certs", "domain", crt.Domain.Main)
-			dir := filepath.Join(certsDir, crt.Domain.Main)
+			c.log.Infow("extracting certs", "domain", crt.Domain.Main)
+			dir := filepath.Join(c.dir, crt.Domain.Main)
 			err = os.MkdirAll(dir, os.ModePerm)
 			if err != nil {
 				return err
@@ -161,7 +174,7 @@ func (c *Certs) extract(log *zap.SugaredLogger, acmePath string, certsDir string
 	return nil
 }
 
-func (c *Certs) splitCert(fullChain []byte) ([]byte, []byte) {
+func (c *certs) splitCert(fullChain []byte) ([]byte, []byte) {
 	var cert []string
 	var chain []string
 	certDone := false
@@ -179,7 +192,7 @@ func (c *Certs) splitCert(fullChain []byte) ([]byte, []byte) {
 	return []byte(strings.Join(cert, "\n")), []byte(strings.Join(chain, "\n"))
 }
 
-func (c *Certs) info(cert []byte) (string, *x509.Certificate, error) {
+func (c *certs) info(cert []byte) (string, *x509.Certificate, error) {
 	block, _ := pem.Decode(cert)
 	if block == nil {
 		return "", nil, errors.New("error decoding cert")
@@ -193,7 +206,7 @@ func (c *Certs) info(cert []byte) (string, *x509.Certificate, error) {
 	return info, crt, err
 }
 
-func (c *Certs) writeCert(path string, data string) ([]byte, error) {
+func (c *certs) writeCert(path string, data string) ([]byte, error) {
 	cert, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return nil, err

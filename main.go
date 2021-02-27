@@ -50,9 +50,12 @@ func main() {
 		ownAddress = e
 	}
 
-	certs := cert.Certs{}
+	certs ,err:= cert.New(log, acmePath, certsDir)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	go certs.WatchFileChanges(log, acmePath, certsDir)
+	go certs.WatchFileChanges()
 
 	r := mux.NewRouter()
 
@@ -80,8 +83,12 @@ func main() {
 	log.Infow("Starting traefik-cert-extractor", "port", addr[1:], "version", version.Version)
 
 	if ownAddress != "" {
+
+		chain := filepath.Join(certsDir, ownAddress, "fullchain.pem")
+		key := filepath.Join(certsDir, ownAddress, "privkey.pem")
+
 		// generate a `Certificate` struct
-		crt, err := tls.LoadX509KeyPair(filepath.Join(certsDir, ownAddress, "fullchain.pem"), filepath.Join(certsDir, ownAddress, "privkey.pem"))
+		crt, err := tls.LoadX509KeyPair(chain, key)
 		if err != nil {
 			log.Fatalw("Error resolving certs", "ownAddress", ownAddress, "certsDir", certsDir)
 		}
