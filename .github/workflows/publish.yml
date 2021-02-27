@@ -5,7 +5,7 @@ on:
     branches: master
   release:
     types:
-      - created
+      - published
 
 jobs:
   main:
@@ -21,13 +21,24 @@ jobs:
           registry: ${{ secrets.REGISTRY_SERVER }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      - name: Build and push
-        id: docker_build
+      - name: Build and push ${{github.event.release.tag_name }}
+        id: docker_build_release
         uses: docker/build-push-action@v2
+        if: ${{ github.event.release.tag_name != '' }}
         with:
           push: true
-          tags: quay.io/bakito/traefik-cert-extractor:latest
+          tags: quay.io/bakito/traefik-cert-extractor:latest,quay.io/bakito/traefik-cert-extractor:${{ github.event.release.tag_name }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          buildArgs: VERSION=${{ github.event.release.tag_name }}
+          build-args: VERSION=${{ github.event.release.tag_name }}
+
+      - name: Build and push master
+        id: docker_build_master
+        uses: docker/build-push-action@v2
+        if: ${{ github.event.release.tag_name == '' }}
+        with:
+          push: true
+          tags: quay.io/bakito/traefik-cert-extractor:master
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          build-args: VERSION=master
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
