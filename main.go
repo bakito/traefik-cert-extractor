@@ -2,12 +2,12 @@ package main
 
 import (
 	"crypto/tls"
+	"embed"
 	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
 
-	"github.com/bakito/traefik-cert-extractor/pkg/box"
 	"github.com/bakito/traefik-cert-extractor/pkg/cert"
 	"github.com/bakito/traefik-cert-extractor/version"
 	"github.com/gorilla/mux"
@@ -26,6 +26,8 @@ var (
 	acmePath   string
 	certsDir   string
 	ownAddress string
+	//go:embed static/*
+	static embed.FS
 )
 
 func main() {
@@ -55,8 +57,8 @@ func main() {
 	r := mux.NewRouter()
 
 	r.PathPrefix("/{category}/").Handler(http.FileServer(http.Dir(certsDir)))
-
-	tmpl := template.Must(template.New("layout.html").Parse(string(box.Get("/index.html"))))
+	index, _ := static.ReadFile("static/index.html")
+	tmpl := template.Must(template.New("layout.html").Parse(string(index)))
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		data := PageData{
@@ -121,6 +123,7 @@ func initLogger() *zap.SugaredLogger {
 
 func fromBox(r *mux.Router, file string) {
 	r.HandleFunc(file, func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write(box.Get(file))
+		f, _ := static.ReadFile(filepath.Join("static", file))
+		_, _ = w.Write(f)
 	})
 }
