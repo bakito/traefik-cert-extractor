@@ -1,0 +1,19 @@
+name: Delete old container images
+
+on:
+  schedule:
+    - cron: '0 0 0 * *'  # the first day of the month
+
+jobs:
+  clean-ghcr:
+    name: Delete old unused container images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old images
+        uses: sondrelg/container-retention-policy@v1
+        with:
+          image-names: dev
+          cut-off: One week ago UTC
+          account-type: personal
+          token: ${{ secrets.GITHUB_TOKEN }}
+          untagged-only: trur
