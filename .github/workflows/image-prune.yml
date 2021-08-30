@@ -1,9 +1,13 @@
 name: Delete old container images
 
+
+
+
 on:
   schedule:
-    - cron: '0 0 0 * *'  # the first day of the month
-
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '30 0 * * *'
+    
 jobs:
   clean-ghcr:
     name: Delete old unused container images
