@@ -6,7 +6,7 @@ name: Delete old container images
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron:  '30 0 * * *'
+    - cron:  '40 * * * *'
     
 jobs:
   clean-ghcr:
@@ -20,4 +20,4 @@ jobs:
           cut-off: One week ago UTC
           account-type: personal
           token: ${{ secrets.GITHUB_TOKEN }}
-          untagged-only: trur
+          untagged-only: true
