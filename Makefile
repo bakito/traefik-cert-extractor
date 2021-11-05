@@ -29,6 +29,8 @@ build-podman:
 	podman build --build-arg upx_brute=" " -t traefik-cert-extractor .
 
 release: goreleaser
+	@version=$$(semver); \
+	git tag -s $$version -m"Release $$version"
 	goreleaser --rm-dist
 
 test-release: goreleaser
