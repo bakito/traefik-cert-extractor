@@ -50,7 +50,7 @@ func main() {
 		ownAddress = e
 	}
 
-	certs ,err:= cert.New(log, acmePath, certsDir)
+	certs, err := cert.New(log, acmePath, certsDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,6 +99,7 @@ func main() {
 			Handler: r,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{crt},
+				MinVersion:   tls.VersionTLS12,
 			},
 		}
 		log.Fatal(s.ListenAndServeTLS("", ""))

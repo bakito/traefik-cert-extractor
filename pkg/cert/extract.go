@@ -30,11 +30,12 @@ type Certs interface {
 	Certs() []Cert
 }
 
+// New extract new certs
 func New(log *zap.SugaredLogger, acme string, certsDir string) (Certs, error) {
 	c := &certs{
-		log:  log,
-		acme: acme,
-		dir:  certsDir,
+		log:   log,
+		acme:  acme,
+		dir:   certsDir,
 		certs: make(map[string]Cert),
 	}
 	return c, c.extract()
@@ -141,18 +142,18 @@ func (c *certs) extract() error {
 			}
 
 			cert, chain := c.splitCert(fullChain)
-			err = ioutil.WriteFile(filepath.Join(dir, "cert.pem"), cert, 0644)
+			err = ioutil.WriteFile(filepath.Join(dir, "cert.pem"), cert, 0o600)
 			if err != nil {
 				return err
 			}
-			err = ioutil.WriteFile(filepath.Join(dir, "chain.pem"), chain, 0644)
+			err = ioutil.WriteFile(filepath.Join(dir, "chain.pem"), chain, 0o600)
 			if err != nil {
 				return err
 			}
 
 			info, infoCrt, err := c.info(cert)
 			if err == nil {
-				err = ioutil.WriteFile(filepath.Join(dir, "info"), []byte(info), 0644)
+				err = ioutil.WriteFile(filepath.Join(dir, "info"), []byte(info), 0o600)
 				if err != nil {
 					return err
 				}
@@ -211,7 +212,7 @@ func (c *certs) writeCert(path string, data string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = ioutil.WriteFile(path, cert, 0644)
+	err = ioutil.WriteFile(path, cert, 0o600)
 	if err != nil {
 		return nil, err
 	}
