@@ -4,7 +4,7 @@ WORKDIR /go/src/app
 
 RUN apt-get update && apt-get install -y upx
 
-ARG VERSION=master
+ARG VERSION=main
 ENV GOPROXY=https://goproxy.io \
   GO111MODULE=on \
   CGO_ENABLED=0 \
