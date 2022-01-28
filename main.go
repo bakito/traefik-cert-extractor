@@ -10,6 +10,7 @@ import (
 
 	"github.com/bakito/traefik-cert-extractor/pkg/cert"
 	"github.com/bakito/traefik-cert-extractor/version"
+	"github.com/dyson/certman"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -96,7 +97,16 @@ func main() {
 		// generate a `Certificate` struct
 		crt, err := tls.LoadX509KeyPair(chain, key)
 		if err != nil {
-			log.Fatalw("Error resolving certs", "ownAddress", ownAddress, "certsDir", certsDir)
+			log.Fatalw("Error resolving certs", "ownAddress", ownAddress, "certsDir", certsDir, "error", err)
+		}
+
+		cm, err := certman.New(chain, key)
+		if err != nil {
+			log.Fatalw("Error resolving certs", "ownAddress", ownAddress, "certsDir", certsDir, "error", err)
+		}
+		cm.Logger(&logWrapper{sl: log})
+		if err := cm.Watch(); err != nil {
+			log.Fatalw("Error watching certs", "ownAddress", ownAddress, "certsDir", certsDir, "error", err)
 		}
 
 		// create a custom server with `TLSConfig`
@@ -104,8 +114,9 @@ func main() {
 			Addr:    addr,
 			Handler: r,
 			TLSConfig: &tls.Config{
-				Certificates: []tls.Certificate{crt},
-				MinVersion:   tls.VersionTLS12,
+				Certificates:   []tls.Certificate{crt},
+				MinVersion:     tls.VersionTLS12,
+				GetCertificate: cm.GetCertificate,
 			},
 		}
 		log.Fatal(s.ListenAndServeTLS("", ""))
@@ -139,4 +150,12 @@ func staticFile(r *gin.Engine, file string) {
 	r.GET(file, func(c *gin.Context) {
 		c.FileFromFS(filepath.Join("static", file), http.FS(static))
 	})
+}
+
+type logWrapper struct {
+	sl *zap.SugaredLogger
+}
+
+func (l *logWrapper) Printf(format string, v ...interface{}) {
+	l.sl.Infof(format, v...)
 }
