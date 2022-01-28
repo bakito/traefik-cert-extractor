@@ -60,27 +60,7 @@ func main() {
 
 	go certs.WatchFileChanges()
 
-	r := gin.Default()
-
-	index, _ := static.ReadFile("static/index.html")
-	r.SetHTMLTemplate(template.Must(template.New("index.html").Parse(string(index))))
-
-	r.GET("/", func(c *gin.Context) {
-		data := PageData{
-			PageTitle: "Known Certificates",
-			Certs:     certs.Certs(),
-			Version:   version.Version,
-		}
-		c.HTML(200, "index.html", data)
-	})
-	staticFile(r, "/gopher.png")
-	staticFile(r, "/favicon.ico")
-	staticFile(r, "/style.css")
-
-	r.GET("/:dir/:file", func(c *gin.Context) {
-		path := filepath.Join(certsDir, c.Param("dir"), c.Param("file"))
-		c.File(path)
-	})
+	r := setupRouter(certs)
 
 	certsDir := "/ssl"
 	if d, ok := os.LookupEnv("CERTS_DIR"); ok {
@@ -124,6 +104,32 @@ func main() {
 		// start HTTP server with `fs` as the default handler
 		log.Fatal(http.ListenAndServe(addr, r))
 	}
+}
+
+func setupRouter(certs cert.Certs) *gin.Engine {
+	r := gin.New()
+	r.Use(gin.Recovery())
+
+	index, _ := static.ReadFile("static/index.html")
+	r.SetHTMLTemplate(template.Must(template.New("index.html").Parse(string(index))))
+
+	r.GET("/", func(c *gin.Context) {
+		data := PageData{
+			PageTitle: "Known Certificates",
+			Certs:     certs.Certs(),
+			Version:   version.Version,
+		}
+		c.HTML(200, "index.html", data)
+	})
+	staticFile(r, "/gopher.png")
+	staticFile(r, "/favicon.ico")
+	staticFile(r, "/style.css")
+
+	r.GET("/:dir/:file", func(c *gin.Context) {
+		path := filepath.Join(certsDir, c.Param("dir"), c.Param("file"))
+		c.File(path)
+	})
+	return r
 }
 
 // PageData page rendering data
