@@ -10,7 +10,7 @@ import (
 
 	"github.com/bakito/traefik-cert-extractor/pkg/cert"
 	"github.com/bakito/traefik-cert-extractor/version"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -31,6 +31,8 @@ var (
 )
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
+
 	log := initLogger()
 	defer func() { _ = log.Sync() }()
 
@@ -57,23 +59,27 @@ func main() {
 
 	go certs.WatchFileChanges()
 
-	r := mux.NewRouter()
+	r := gin.Default()
 
-	r.PathPrefix("/{category}/").Handler(http.FileServer(http.Dir(certsDir)))
 	index, _ := static.ReadFile("static/index.html")
-	tmpl := template.Must(template.New("layout.html").Parse(string(index)))
+	r.SetHTMLTemplate(template.Must(template.New("index.html").Parse(string(index))))
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r.GET("/", func(c *gin.Context) {
 		data := PageData{
 			PageTitle: "Known Certificates",
 			Certs:     certs.Certs(),
 			Version:   version.Version,
 		}
-		_ = tmpl.Execute(w, data)
+		c.HTML(200, "index.html", data)
 	})
-	fromBox(r, "/gopher.png")
-	fromBox(r, "/favicon.ico")
-	fromBox(r, "/style.css")
+	staticFile(r, "/gopher.png")
+	staticFile(r, "/favicon.ico")
+	staticFile(r, "/style.css")
+
+	r.GET("/:dir/:file", func(c *gin.Context) {
+		path := filepath.Join(certsDir, c.Param("dir"), c.Param("file"))
+		c.File(path)
+	})
 
 	certsDir := "/ssl"
 	if d, ok := os.LookupEnv("CERTS_DIR"); ok {
@@ -129,9 +135,8 @@ func initLogger() *zap.SugaredLogger {
 	return logger.Sugar()
 }
 
-func fromBox(r *mux.Router, file string) {
-	r.HandleFunc(file, func(w http.ResponseWriter, r *http.Request) {
-		f, _ := static.ReadFile(filepath.Join("static", file))
-		_, _ = w.Write(f)
+func staticFile(r *gin.Engine, file string) {
+	r.GET(file, func(c *gin.Context) {
+		c.FileFromFS(filepath.Join("static", file), http.FS(static))
 	})
 }
