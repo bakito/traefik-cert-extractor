@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/tls"
 	"embed"
+	"flag"
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -21,6 +23,7 @@ const (
 	envCertsDir     = "CERTS_DIR"
 	envOwnAddress   = "OWN_ADDRESS"
 	addr            = ":8080"
+	healthzPath     = "/healthz"
 )
 
 var (
@@ -32,6 +35,17 @@ var (
 )
 
 func main() {
+	h := flag.Bool("healthz", false, "run healthcheck")
+	flag.Parse()
+
+	if e, ok := os.LookupEnv(envOwnAddress); ok {
+		ownAddress = e
+	}
+
+	if *h {
+		os.Exit(healthz(ownAddress))
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 
 	log := initLogger()
@@ -47,10 +61,6 @@ func main() {
 		log.Fatalw("Missing environment variable", "name", envCertsDir)
 	} else {
 		certsDir = e
-	}
-
-	if e, ok := os.LookupEnv(envOwnAddress); ok {
-		ownAddress = e
 	}
 
 	certs, err := cert.New(log, acmePath, certsDir)
@@ -121,6 +131,9 @@ func setupRouter(certs cert.Certs) *gin.Engine {
 		}
 		c.HTML(200, "index.html", data)
 	})
+	r.GET(healthzPath, func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
 	staticFile(r, "/gopher.png")
 	staticFile(r, "/favicon.ico")
 	staticFile(r, "/style.css")
@@ -164,4 +177,24 @@ type logWrapper struct {
 
 func (l *logWrapper) Printf(format string, v ...interface{}) {
 	l.sl.Infof(format, v...)
+}
+
+func healthz(ownAddress string) int {
+	prot := "http"
+	transCfg := &http.Transport{}
+	if ownAddress != "" {
+		prot = "https"
+		// #nosec G402 ignore cert for health check
+		transCfg.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	client := &http.Client{Transport: transCfg}
+	resp, err := client.Get(fmt.Sprintf("%s://localhost%s%s", prot, addr, healthzPath))
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusOK {
+			return 0
+		}
+	}
+	return 1
 }

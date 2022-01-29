@@ -28,7 +28,7 @@ jobs:
         with:
           push: true
           tags: ghcr.io/bakito/traefik-cert-extractor:latest,ghcr.io/bakito/traefik-cert-extractor:${{ github.event.release.tag_name }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64 #,linux/arm64,linux/arm/v7
           build-args: VERSION=${{ github.event.release.tag_name }}
 
       - name: Build and push main
@@ -38,7 +38,7 @@ jobs:
         with:
           push: true
           tags: ghcr.io/bakito/traefik-cert-extractor:main
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64 #,linux/arm64,linux/arm/v7
           build-args: VERSION=main
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}

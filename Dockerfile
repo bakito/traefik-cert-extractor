@@ -21,6 +21,7 @@ WORKDIR /opt/go
 
 LABEL maintainer="bakito <github@bakito.ch>"
 EXPOSE 8080
+HEALTHCHECK CMD ["/opt/go/traefik-cert-extractor", "-healthz"]
 ENTRYPOINT ["/opt/go/traefik-cert-extractor"]
 
 COPY --from=builder /go/src/app/traefik-cert-extractor  /opt/go/traefik-cert-extractor
