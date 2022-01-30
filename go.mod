@@ -3,6 +3,7 @@ module github.com/bakito/traefik-cert-extractor
 go 1.17
 
 require (
+	github.com/dyson/certman v0.2.1
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
@@ -10,7 +11,6 @@ require (
 )
 
 require (
-	github.com/dyson/certman v0.2.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect

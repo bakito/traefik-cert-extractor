@@ -73,7 +73,7 @@ func (c *certs) Certs() []Cert {
 		certs = append(certs, value)
 	}
 	sort.Slice(certs, func(i, j int) bool {
-		return certs[i].Name > certs[j].Name
+		return certs[i].Name < certs[j].Name
 	})
 
 	return certs
