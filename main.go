@@ -134,7 +134,7 @@ func setupRouter(certs cert.Certs) *gin.Engine {
 	r.GET(healthzPath, func(c *gin.Context) {
 		c.String(http.StatusOK, "OK")
 	})
-	staticFile(r, "/gopher.png")
+	staticFile(r, "/traefik.png")
 	staticFile(r, "/favicon.ico")
 	staticFile(r, "/style.css")
 

@@ -6,7 +6,7 @@ html {
 }
 body {
   margin-bottom: 60px; /* Margin bottom by footer height */
-  background-image: url("/gopher.png");
+  background-image: url("/traefik.png");
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-position: right bottom 60px;
