@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/dyson/certman v0.2.1
-	github.com/fsnotify/fsnotify v1.5.3
+	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
 	go.uber.org/zap v1.21.0
@@ -26,6 +26,6 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
