@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/bakito/traefik-cert-extractor/pkg/cert"
 	"github.com/bakito/traefik-cert-extractor/version"
@@ -108,6 +109,7 @@ func main() {
 				MinVersion:     tls.VersionTLS12,
 				GetCertificate: cm.GetCertificate,
 			},
+			ReadHeaderTimeout: 1 * time.Second,
 		}
 		log.Fatal(s.ListenAndServeTLS("", ""))
 	} else {

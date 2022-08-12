@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -119,7 +118,7 @@ func (c *certs) WatchFileChanges() {
 }
 
 func (c *certs) extract() error {
-	dat, err := ioutil.ReadFile(c.acme)
+	dat, err := os.ReadFile(c.acme)
 	if err != nil {
 		return err
 	}
@@ -142,18 +141,18 @@ func (c *certs) extract() error {
 			}
 
 			cert, chain := c.splitCert(fullChain)
-			err = ioutil.WriteFile(filepath.Join(dir, "cert.pem"), cert, 0o600)
+			err = os.WriteFile(filepath.Join(dir, "cert.pem"), cert, 0o600)
 			if err != nil {
 				return err
 			}
-			err = ioutil.WriteFile(filepath.Join(dir, "chain.pem"), chain, 0o600)
+			err = os.WriteFile(filepath.Join(dir, "chain.pem"), chain, 0o600)
 			if err != nil {
 				return err
 			}
 
 			info, infoCrt, err := c.info(cert)
 			if err == nil {
-				err = ioutil.WriteFile(filepath.Join(dir, "info"), []byte(info), 0o600)
+				err = os.WriteFile(filepath.Join(dir, "info"), []byte(info), 0o600)
 				if err != nil {
 					return err
 				}
@@ -212,7 +211,7 @@ func (c *certs) writeCert(path string, data string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = ioutil.WriteFile(path, cert, 0o600)
+	err = os.WriteFile(path, cert, 0o600)
 	if err != nil {
 		return nil, err
 	}
