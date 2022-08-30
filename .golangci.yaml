@@ -27,12 +27,9 @@ linters:
   - nolintlint
   - revive
   - staticcheck
-  - structcheck
-  #- typecheck
   - unconvert
   - unparam
   - unused
-  - varcheck
   - wastedassign
 linters-settings:
   gosec:
