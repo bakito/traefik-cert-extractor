@@ -80,6 +80,12 @@ func main() {
 
 	log.Infow("Starting traefik-cert-extractor", "port", addr[1:], "version", version.Version)
 
+	s := &http.Server{
+		Addr:              addr,
+		Handler:           r,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+
 	if ownAddress != "" {
 
 		chain := filepath.Join(certsDir, ownAddress, "fullchain.pem")
@@ -101,20 +107,15 @@ func main() {
 		}
 
 		// create a custom server with `TLSConfig`
-		s := &http.Server{
-			Addr:    addr,
-			Handler: r,
-			TLSConfig: &tls.Config{
-				Certificates:   []tls.Certificate{crt},
-				MinVersion:     tls.VersionTLS12,
-				GetCertificate: cm.GetCertificate,
-			},
-			ReadHeaderTimeout: 1 * time.Second,
+		s.TLSConfig = &tls.Config{
+			Certificates:   []tls.Certificate{crt},
+			MinVersion:     tls.VersionTLS12,
+			GetCertificate: cm.GetCertificate,
 		}
 		log.Fatal(s.ListenAndServeTLS("", ""))
 	} else {
 		// start HTTP server with `fs` as the default handler
-		log.Fatal(http.ListenAndServe(addr, r))
+		log.Fatal(s.ListenAndServe())
 	}
 }
 
