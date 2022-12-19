@@ -1,9 +1,9 @@
 module github.com/bakito/traefik-cert-extractor
 
-go 1.18
+go 1.19
 
 require (
-	github.com/dyson/certman v0.3.0
+	github.com/dyson/certman v0.2.2-0.20221026114604-d38fd5a37a55
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
