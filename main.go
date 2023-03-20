@@ -113,10 +113,9 @@ func main() {
 			GetCertificate: cm.GetCertificate,
 		}
 		log.Fatal(s.ListenAndServeTLS("", ""))
-	} else {
-		// start HTTP server with `fs` as the default handler
-		log.Fatal(s.ListenAndServe())
 	}
+	// start HTTP server with `fs` as the default handler
+	log.Fatal(s.ListenAndServe())
 }
 
 func setupRouter(certs cert.Certs) *gin.Engine {
