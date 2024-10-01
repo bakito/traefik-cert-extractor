@@ -1,6 +1,6 @@
 module github.com/bakito/traefik-cert-extractor
 
-go 1.20
+go 1.23.1
 
 require (
 	github.com/dyson/certman v0.2.1
