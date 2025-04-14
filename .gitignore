@@ -16,3 +16,4 @@ dist
 
 testdata/certs
 traefik-cert-extractor*
+bin

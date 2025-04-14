@@ -1,3 +1,6 @@
+# Include toolbox tasks
+include ./.toolbox.mk
+
 # Run go fmt against code
 fmt:
 	go fmt ./...
@@ -7,9 +10,9 @@ fmt:
 vet:
 	go vet ./...
 
-# Run golangci-lint
-lint: golangci-lint
-	golangci-lint run
+# Run go golanci-lint
+lint: tb.golangci-lint
+	$(TB_GOLANGCI_LINT) run --fix
 
 # Run go mod tidy
 tidy:
@@ -28,24 +31,13 @@ build-docker:
 build-podman:
 	podman build --build-arg upx_brute=" " -t traefik-cert-extractor .
 
-release: goreleaser
-	@version=$$(semver); \
+release: tb.goreleaser tb.semver
+	@version=$$($(TB_SEMVER)); \
 	git tag -s $$version -m"Release $$version"
-	goreleaser --rm-dist
+	$(TB_GORELEASER) --clean
 
-test-release: goreleaser
-	goreleaser --skip-publish --snapshot --rm-dist
-
-tools: golangci-lint goreleaser
+test-release: tb.goreleaser
+	$(TB_GORELEASER) --skip=publish --snapshot --clean
 
 generate:
 	go generate ./...
-
-goreleaser:
-ifeq (, $(shell which goreleaser))
- $(shell go get github.com/goreleaser/goreleaser)
-endif
-golangci-lint:
-ifeq (, $(shell which golangci-lint))
- $(shell go get github.com/golangci/golangci-lint/cmd/golangci-lint)
-endif
