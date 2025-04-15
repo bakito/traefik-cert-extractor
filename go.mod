@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/dyson/certman v0.2.1
-	github.com/fsnotify/fsnotify v1.8.0
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
 	go.uber.org/zap v1.27.0
