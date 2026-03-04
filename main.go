@@ -177,7 +177,7 @@ type logWrapper struct {
 	sl *zap.SugaredLogger
 }
 
-func (l *logWrapper) Printf(format string, v ...interface{}) {
+func (l *logWrapper) Printf(format string, v ...any) {
 	l.sl.Infof(format, v...)
 }
 

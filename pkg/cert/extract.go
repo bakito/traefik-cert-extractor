@@ -179,7 +179,7 @@ func (c *certs) splitCert(fullChain []byte) ([]byte, []byte) {
 	var chain []string
 	certDone := false
 
-	for _, l := range strings.Split(string(fullChain), "\n") {
+	for l := range strings.SplitSeq(string(fullChain), "\n") {
 		if strings.TrimSpace(l) != "" {
 			if !certDone {
 				cert = append(cert, l)
