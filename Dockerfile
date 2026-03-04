@@ -1,4 +1,4 @@
-FROM golang:1.26-bullseye AS builder
+FROM golang:1.26.0-trixie AS builder
 
 WORKDIR /go/src/app
 
