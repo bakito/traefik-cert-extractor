@@ -9,8 +9,8 @@ github.com/cloudwego/base64x v0.1.6/go.mod h1:OFcloc187FXDaYHvrNIjxSe8ncn0OOM8gE
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dyson/certman v0.2.1 h1:+EJdgffbfwIkBvnyx97mfS3slfn2o4UN/LWGm+mWVrQ=
-github.com/dyson/certman v0.2.1/go.mod h1:Z2ho3wmP4oCGON+c/RF+FJVsMb9zYZVsupp0c1a+SlQ=
+github.com/dyson/certman v0.3.0 h1:S7WCUim5faT/OiBhiY3u5cMaiC9MNKiA+8PJDXLaIYQ=
+github.com/dyson/certman v0.3.0/go.mod h1:RMWlyA9op6D9SxOBRRX3sxnParehv9gf52WWUJPd1JA=
 github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
 github.com/gabriel-vasile/mimetype v1.4.12 h1:e9hWvmLYvtp846tLHam2o++qitpguFiYCKbn0w9jyqw=

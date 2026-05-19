@@ -1,12 +1,13 @@
-FROM golang:1.26.3-trixie AS builder
+# Multi-stage build with explicit platform specification
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS builder
+
 
 WORKDIR /go/src/app
 
-RUN apt-get update && apt-get install -y upx
+RUN apk add --no-cache upx
 
 ARG VERSION=main
-ENV GOPROXY=https://goproxy.io \
-  GO111MODULE=on \
+ENV GO111MODULE=on \
   CGO_ENABLED=0 \
   GOOS=linux
 
